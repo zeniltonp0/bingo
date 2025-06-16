@@ -2,31 +2,22 @@
 
 namespace App\Livewire;
 
+use Livewire\Attributes\Validate;
 use Livewire\Component;
 
 class CartelasGenerator extends Component
 {
 
+    #[Validate('required|min:3|max:10')]
     public $nomeBingo;
+
+    #[Validate('required')]
     public $listaCasas = '';
+
+    #[Validate('required|gt:1|lt:75')]
     public $quantidadeCartelas;
+
     public  $cartelasGeradas = [];
-
-    protected $regras = [
-        'nomeBingo' => 'required|string|max:50',
-        'quantidadeCartelas' => 'required|integer|min:1|max:200',
-        'listaCasas' => 'required|string', 
-    ];
-
-    
-    protected $erros = [
-        'nomeBingo.required' => 'O nome do bingo é obrigatório.',
-        'quantidadeCartelas.required' => 'A quantidade de cartelas é obrigatória.',
-        'quantidadeCartelas.integer' => 'A quantidade de cartelas deve ser um número inteiro.',
-        'quantidadeCartelas.min' => 'A quantidade de cartelas deve ser no mínimo :min.',
-        'quantidadeCartelas.max' => 'A quantidade de cartelas deve ser no máximo :max.',
-        'listaCasas.required' => 'A lista de casas é obrigatória.',
-    ];
 
 
     public function mount(){
@@ -38,12 +29,11 @@ class CartelasGenerator extends Component
         // 1. Validar os inputs
         $this->validate();
 
-        // 2. Processar a lista de casas (apenas numérico agora)
-        // Remove linhas vazias e espaços em branco extras
+        
         $items = array_map('trim', explode("\n", $this->listaCasas));
         $items = array_filter($items, 'strlen'); // Remove strings vazias
 
-        // Valida se todos os itens são numéricos e converte para int
+        
         $itensNumericos = [];
         foreach ($items as $item) {
             if (is_numeric($item)) {
@@ -53,15 +43,15 @@ class CartelasGenerator extends Component
                 return;
             }
         }
-        $items = array_unique($itensNumericos); // Remove duplicatas de números
-        sort($items); // Opcional: ordenar os números para melhor organização
+        $items = array_unique($itensNumericos); 
+        sort($items); 
 
-        if (count($items) < 25) { // Mínimo de 25 para uma cartela 5x5 com FREE
+        if (count($items) < 25) { 
             $this->addError('houseList', 'A lista de casas deve conter no mínimo 25 números únicos para gerar cartelas válidas.');
             return;
         }
 
-        // 3. Resetar as cartelas geradas antes de gerar novas
+        
         $this->cartelasGeradas = [];
 
         // 4. Lógica para gerar as cartelas
@@ -76,30 +66,29 @@ class CartelasGenerator extends Component
      * @return array
      */
     public function gerarUmaCartela(){
-        // Embaralha os itens disponíveis para pegar aleatoriamente
+        
         shuffle($itensDisponiveis);
 
-        // Uma cartela de bingo 5x5 precisa de 24 itens únicos (o 25º é o FREE)
-        // Certifica-se de que temos itens suficientes (já validado no método principal, mas bom ter aqui)
+        
         if (count($itensDisponiveis) < 24) {
-            return []; // Retorna uma cartela vazia se não houver itens suficientes
+            return []; 
         }
 
-        // Pega 24 itens aleatórios e únicos para esta cartela
+        
         $cardItems = array_slice($itensDisponiveis, 0, 24);
 
         // Estrutura das colunas B, I, N, G, O
         $columns = ['B', 'I', 'N', 'G', 'O'];
         $cardGrid = [];
-        $k = 0; // Índice para percorrer $cardItems
+        $k = 0; 
 
         foreach ($columns as $col) {
             $columnArray = [];
             for ($j = 0; $j < 5; $j++) {
-                if ($col == 'N' && $j == 2) { // Posição central na coluna 'N'
-                    $columnArray[] = 'X'; // O texto 'FREE' pode ser uma imagem se $imageUrl estiver definida
+                if ($col == 'N' && $j == 2) { 
+                    $columnArray[] = 'X'; 
                 } else {
-                    // Garantir que não pegamos um índice fora do array $cardItems
+                    
                     $columnArray[] = $cardItems[$k] ?? null;
                     $k++;
                 }
