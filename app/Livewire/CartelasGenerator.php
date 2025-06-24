@@ -14,14 +14,14 @@ class CartelasGenerator extends Component
     #[Validate('required')]
     public $listaCasas = '';
 
-    #[Validate('required|gt:1|lt:75')]
+    #[Validate('required|integer|min:1|max:200')] 
     public $quantidadeCartelas;
 
-    public  $cartelasGeradas = [];
+    public $cartelasGeradas = [];
 
 
     public function mount(){
-        $this->listaCasas = implode("\n", range(1,100));
+        $this->listaCasas = implode("\n", range(1, 75)); 
     }
 
     public function gerarCartelasBingo()
@@ -29,11 +29,9 @@ class CartelasGenerator extends Component
         // 1. Validar os inputs
         $this->validate();
 
-        
         $items = array_map('trim', explode("\n", $this->listaCasas));
-        $items = array_filter($items, 'strlen'); // Remove strings vazias
+        $items = array_filter($items, 'strlen'); 
 
-        
         $itensNumericos = [];
         foreach ($items as $item) {
             if (is_numeric($item)) {
@@ -43,21 +41,22 @@ class CartelasGenerator extends Component
                 return;
             }
         }
-        $items = array_unique($itensNumericos); 
-        sort($items); 
+        $items = array_unique($itensNumericos);
+        sort($items);
 
-        if (count($items) < 25) { 
-            $this->addError('houseList', 'A lista de casas deve conter no mínimo 25 números únicos para gerar cartelas válidas.');
+        if (count($items) < 24) { 
+            $this->addError('listaCasas', 'A lista de casas deve conter no mínimo 24 números únicos para gerar cartelas válidas.');
             return;
         }
 
-        
         $this->cartelasGeradas = [];
 
         // 4. Lógica para gerar as cartelas
         for ($i = 0; $i < $this->quantidadeCartelas; $i++) {
-            $cartela = $this->gerarUmaCartela($items);
-            $this->quantidadeCartelas[] = $cartela;
+            $cartela = $this->gerarUmaCartela($items); 
+            if (!empty($cartela)) {
+                $this->cartelasGeradas[] = $cartela; 
+            }
         }
     }
 
@@ -65,8 +64,8 @@ class CartelasGenerator extends Component
      * @param array $itensDisponiveis
      * @return array
      */
-    public function gerarUmaCartela(){
-        
+    public function gerarUmaCartela(array $itensDisponiveis): array
+    {
         shuffle($itensDisponiveis);
 
         
@@ -74,21 +73,20 @@ class CartelasGenerator extends Component
             return []; 
         }
 
-        
+        // Pega 24 itens aleatórios e únicos
         $cardItems = array_slice($itensDisponiveis, 0, 24);
+        sort($cardItems); 
 
-        // Estrutura das colunas B, I, N, G, O
         $columns = ['B', 'I', 'N', 'G', 'O'];
         $cardGrid = [];
-        $k = 0; 
+        $k = 0;
 
         foreach ($columns as $col) {
             $columnArray = [];
             for ($j = 0; $j < 5; $j++) {
-                if ($col == 'N' && $j == 2) { 
+                if ($col == 'N' && $j == 2) {
                     $columnArray[] = 'X'; 
                 } else {
-                    
                     $columnArray[] = $cardItems[$k] ?? null;
                     $k++;
                 }
@@ -103,6 +101,4 @@ class CartelasGenerator extends Component
     {
         return view('livewire.cartelas-generator');
     }
-
-    
 }
